@@ -1,18 +1,31 @@
-name: CI
+name: ci
 
 on:
-  pull_request:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
 
 jobs:
-  pre-commit:
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.13"
     steps:
-      - uses: actions/checkout@v6
-      - uses: astral-sh/setup-uv@v7
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          enable-cache: true
-      - run: uv sync --locked
-      - run: uv run pre-commit run --all-files
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - run: npm install prettier prettier-plugin-toml
+      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run: uv run pre-commit run -a
